@@ -32,24 +32,35 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
-    
+
     def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            token, created = Token.objects.get_or_create(user=user)
-            user_data = UserSerializer(user).data
+        try:
+            serializer = UserLoginSerializer(data=request.data)
+            if serializer.is_valid():
+                user = serializer.validated_data['user']
+                token, created = Token.objects.get_or_create(user=user)
+                user_data = UserSerializer(user).data
+                return Response({
+                    'success': True,
+                    'message': 'Login successful',
+                    'user': user_data,
+                    'token': token.key,
+                }, status=status.HTTP_200_OK)
+
             return Response({
-                'success': True,
-                'message': 'Login successful',
-                'user': user_data,
-                'token': token.key,
-            }, status=status.HTTP_200_OK)
-        return Response({
-            'success': False,
-            'message': 'Login failed',
-            'errors': serializer.errors,
-        }, status=status.HTTP_400_BAD_REQUEST)
+                'success': False,
+                'message': 'Login failed',
+                'errors': serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {
+                    'success': False,
+                    'message': 'Login server error',
+                    'detail': str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class LogoutView(APIView):

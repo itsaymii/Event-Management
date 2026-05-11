@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(null);
 
-  const API_BASE = 'http://127.0.0.1:8000/api';
+  const API_BASE = 'http://127.0.0.1:8002/api';
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -50,17 +50,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (identifier, password) => {
     setIsLoading(true);
     try {
-      // Build payload - send both fields, backend will accept either
+      // Build payload - send both email & username to avoid mismatch
       const payload = {
         password: password.trim(),
+        email: identifier.includes('@') ? identifier.trim() : identifier.trim(), // backend can accept either
+        username: identifier.includes('@') ? identifier.trim().split('@')[0] : identifier.trim(),
       };
-      
-      // Backend accepts 'email' or 'username' field
-      if (identifier.includes('@')) {
-        payload.email = identifier.trim();
-      } else {
-        payload.username = identifier.trim();
-      }
 
       const res = await axios.post(`${API_BASE}/auth/login/`, payload, {
         headers: { 'Content-Type': 'application/json' },

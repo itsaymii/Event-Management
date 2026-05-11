@@ -57,10 +57,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
+# Database: use DATABASE_URL if provided, otherwise fall back to local SQLite
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    DATABASE_URL = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
-    )
+    'default': dj_database_url.config(default=DATABASE_URL)
 }
 
 AUTH_PASSWORD_VALIDATORS = []

@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.contrib.auth import authenticate
 from .models import CustomUser
 
 
@@ -19,7 +18,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
-        
+
         user = CustomUser.objects.create_user(
             username=validated_data['email'],
             email=validated_data['email'],
@@ -32,17 +31,30 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    # Accept either email or username
+    email = serializers.EmailField(required=False)
+    username = serializers.CharField(required=False)
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
         email = data.get('email')
+        username = data.get('username')
         password = data.get('password')
 
-        try:
-            user = CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
-            raise serializers.ValidationError({'email': 'User not found.'})
+        if not email and not username:
+            raise serializers.ValidationError({'detail': 'Provide either email or username.'})
+
+        user = None
+        if email:
+            try:
+                user = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                raise serializers.ValidationError({'email': 'User not found.'})
+        else:
+            try:
+                user = CustomUser.objects.get(username=username)
+            except CustomUser.DoesNotExist:
+                raise serializers.ValidationError({'username': 'User not found.'})
 
         if not user.check_password(password):
             raise serializers.ValidationError({'password': 'Invalid password.'})
