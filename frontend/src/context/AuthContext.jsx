@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-// ✅ Helper function to format API errors (handles both string and array)
+// Helper function to format API errors (handles both string and array)
 const formatApiError = (errorValue) => {
   if (!errorValue) return '';
   if (Array.isArray(errorValue)) {
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
     
     if (storedToken && storedUser) {
       setToken(storedToken);
-      // ✅ Parse and ensure organization_role is uppercase
+      // Parse and ensure organization_role is uppercase
       const parsedUser = JSON.parse(storedUser);
       if (parsedUser.organization_role) {
         parsedUser.organization_role = parsedUser.organization_role.toUpperCase();
@@ -46,16 +46,16 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  // ✅ Login function - FIXED with uppercase role & debug logs
+  // Login function - FIXED with uppercase role & debug logs
   const login = async (identifier, password) => {
     setIsLoading(true);
     try {
-      // ✅ Build payload - send both fields, backend will accept either
+      // Build payload - send both fields, backend will accept either
       const payload = {
         password: password.trim(),
       };
       
-      // ✅ Backend accepts 'email' or 'username' field
+      // Backend accepts 'email' or 'username' field
       if (identifier.includes('@')) {
         payload.email = identifier.trim();
       } else {
@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
         timeout: 10000
       });
 
-      // ✅ Extract tokens and user data from JWT response
+      // Extract tokens and user data from JWT response
       const accessToken = res.data.access;
       const refreshToken = res.data.refresh;
       
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('refresh_token', refreshToken || '');
       setToken(accessToken);
       
-      // ✅ FIXED: Force organization_role to uppercase for consistent comparison
+      // FIXED: Force organization_role to uppercase for consistent comparison
       const userInfo = { 
         id: res.data.user_id || res.data.id,
         username: res.data.username || identifier,
@@ -92,9 +92,9 @@ export const AuthProvider = ({ children }) => {
         full_name: res.data.full_name || `${res.data.first_name || ''} ${res.data.last_name || ''}`.trim() || identifier,
       };
 
-      // ✅ Debug log (pansamantala - pwede mong tanggalin pag working na)
-      console.log('🔐 Login Success → User Info:', userInfo);
-      console.log('🔐 Login Success → Role (uppercase):', userInfo.organization_role);
+      // Debug log (pansamantala - pwede mong tanggalin pag working na)
+      console.log('Login Success → User Info:', userInfo);
+      console.log('Login Success → Role (uppercase):', userInfo.organization_role);
 
       setUser(userInfo);
       localStorage.setItem('user', JSON.stringify(userInfo));
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Register function - FIXED with organization_role handling
+  // Register function - FIXED with organization_role handling
   const register = async (fullName, email, password, confirmPassword, organizationRole) => {
     setIsLoading(true);
     try {
@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }) => {
         confirm_password: confirmPassword,
         first_name: fullName.split(' ')[0] || '',
         last_name: fullName.split(' ').slice(1).join(' ') || '',
-        organization_role: (organizationRole || 'User').toUpperCase(), // ✅ Send uppercase to backend
+        organization_role: (organizationRole || 'User').toUpperCase(), // Send uppercase to backend
       };
 
       const res = await axios.post(`${API_BASE}/auth/register/`, payload, {
@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
         timeout: 10000
       });
 
-      // ✅ Return role in uppercase for consistency
+      // Return role in uppercase for consistency
       return { 
         success: true, 
         message: res.data.message || 'Account created successfully! Please login with your credentials.',
@@ -200,7 +200,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Logout function
+  // Logout function
   const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');

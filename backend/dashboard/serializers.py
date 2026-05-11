@@ -5,12 +5,10 @@ from django.core.validators import MinLengthValidator
 import json
 
 User = get_user_model()
-from .models import EventApplication, Equipment, EquipmentBorrow
+from .models import EventApplication, Equipment, EquipmentBorrow, Notification
 
 
-# =============================================================================
 # REGISTRATION SERIALIZER
-# =============================================================================
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
@@ -59,9 +57,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
 
-# =============================================================================
 # PROFILE UPDATE SERIALIZER
-# =============================================================================
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -74,9 +70,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         return value
 
 
-# =============================================================================
 # PASSWORD CHANGE SERIALIZER
-# =============================================================================
 class PasswordChangeSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
     new_password = serializers.CharField(
@@ -101,9 +95,7 @@ class PasswordChangeSerializer(serializers.Serializer):
         return user
 
 
-# =============================================================================
 # USER SERIALIZER
-# =============================================================================
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField(read_only=True)
     application_count = serializers.SerializerMethodField(read_only=True)
@@ -125,9 +117,7 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.applications.count() if hasattr(obj, 'applications') else 0
 
 
-# =============================================================================
 # SHARED HELPER
-# =============================================================================
 def parse_equipment_field(raw):
     """
     Accepts multiple shapes for the equipment field:
@@ -196,9 +186,7 @@ def parse_equipment_field(raw):
     return [s] if s else []
 
 
-# =============================================================================
 # EVENT APPLICATION SERIALIZER
-# =============================================================================
 class EventApplicationSerializer(serializers.ModelSerializer):
     submission_date = serializers.DateTimeField(source='created_at', read_only=True)
     status_display  = serializers.CharField(source='get_status_display', read_only=True)
@@ -300,10 +288,7 @@ class EventApplicationSerializer(serializers.ModelSerializer):
         rep['equipment'] = parse_equipment_field(instance.equipment)
         return rep
 
-
-# =============================================================================
 # ADMIN APPLICATION SERIALIZER
-# =============================================================================
 class AdminApplicationSerializer(serializers.ModelSerializer):
     user_email             = serializers.EmailField(source='user.email', read_only=True)
     user_username          = serializers.CharField(source='user.username', read_only=True)
@@ -386,9 +371,7 @@ class AdminApplicationSerializer(serializers.ModelSerializer):
         return rep
 
 
-# =============================================================================
 # APPLICATION LIST SERIALIZER (Lightweight)
-# =============================================================================
 class ApplicationListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     location       = serializers.SerializerMethodField(read_only=True)
@@ -406,9 +389,7 @@ class ApplicationListSerializer(serializers.ModelSerializer):
         return getattr(obj, 'venue', None) or getattr(obj, 'location', None) or ''
 
 
-# =============================================================================
 # APPLICATION REVIEW SERIALIZER
-# =============================================================================
 class ApplicationReviewSerializer(serializers.Serializer):
     action      = serializers.ChoiceField(choices=['approve', 'reject'], required=True)
     reason      = serializers.CharField(required=False, allow_blank=True, max_length=500)
@@ -420,9 +401,7 @@ class ApplicationReviewSerializer(serializers.Serializer):
         return attrs
 
 
-# =============================================================================
 # DASHBOARD STATS SERIALIZER
-# =============================================================================
 class DashboardStatsSerializer(serializers.Serializer):
     total_applications        = serializers.IntegerField()
     total_applications_change = serializers.FloatField()
@@ -437,9 +416,7 @@ class DashboardStatsSerializer(serializers.Serializer):
     status_trend              = serializers.ListField(child=serializers.DictField(), read_only=True, required=False)
 
 
-# =============================================================================
 # BULK ACTION SERIALIZER
-# =============================================================================
 class BulkApplicationActionSerializer(serializers.Serializer):
     application_ids = serializers.ListField(child=serializers.IntegerField(), required=True, min_length=1)
     action          = serializers.ChoiceField(choices=['approve', 'reject'], required=True)
@@ -452,9 +429,7 @@ class BulkApplicationActionSerializer(serializers.Serializer):
         return attrs
 
 
-# =============================================================================
 # CUSTOM JWT SERIALIZER
-# =============================================================================
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username = serializers.CharField(required=False, allow_blank=True)
     email    = serializers.CharField(required=False, allow_blank=True)
@@ -507,9 +482,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
 
 
-# =============================================================================
 # EQUIPMENT SERIALIZERS
-# =============================================================================
 class EquipmentSerializer(serializers.ModelSerializer):
     available_quantity = serializers.SerializerMethodField()
 
@@ -553,3 +526,20 @@ class EquipmentBorrowSerializer(serializers.ModelSerializer):
 
     def get_is_overdue(self, obj):
         return obj.is_overdue
+
+
+# NOTIFICATION SERIALIZER
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            'id',
+            'user',
+            'notif_type',
+            'title',
+            'message',
+            'is_read',
+            'created_at',
+            'payload',
+        ]
+        read_only_fields = ['id', 'user', 'created_at']

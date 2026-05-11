@@ -574,7 +574,7 @@ const AdminEquipmentManagement = () => {
       </div>
       )}
 
-      {/* ✅ Equipment Inventory Table - Matches Dashboard Table Style */}
+      {/* Equipment Inventory Table - Matches Dashboard Table Style */}
       {activeTab === 'inventory' && (
       <div className="bg-white rounded-3xl border border-slate-200/50 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">

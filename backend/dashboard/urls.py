@@ -20,6 +20,7 @@ from .views import (
 
 # ✅ Import Serializers
 from .serializers import CustomTokenObtainPairSerializer
+from .views import list_notifications, mark_notifications_read
 
 User = get_user_model()
 
@@ -133,20 +134,24 @@ urlpatterns = [
     # ✅ Get current user profile (includes organization_role)
     path('auth/user/', get_user_info, name='user_info'),
     
-    # ✅ Update user profile (first_name, last_name)
+    #  Update user profile (first_name, last_name)
     path('auth/user/profile/', update_profile, name='update_profile'),
     
-    # ✅ Change user password
+    #  Change user password
     path('auth/user/password/', change_password, name='change_password'),
     
-    # ✅ Get available equipment for applications
+    #  Get available equipment for applications
     path('equipment/available/', get_available_equipment, name='available_equipment'),
     
-    # 👥 REGULAR USER ENDPOINTS (/api/applications/)
+    #  REGULAR USER ENDPOINTS (/api/applications/)
     # Managed by EventApplicationViewSet via router
     path('', include(user_router.urls)),
     
-    # 🔐 ADMIN ENDPOINTS (/api/admin/)
+    #  ADMIN ENDPOINTS (/api/admin/)
+    # Notifications for current user
+    path('admin/notifications/', list_notifications, name='notifications_list'),
+    path('admin/notifications/mark_read/', mark_notifications_read, name='notifications_mark_read'),
+
     # Managed by AdminApplicationViewSet & AdminUserViewSet via router
     path('admin/', include(admin_router.urls)),
 ]

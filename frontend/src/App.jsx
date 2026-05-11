@@ -11,10 +11,10 @@ import ApplicationsPage from './pages/Application';
 import SchedulePage from './pages/SchedulePage';
 import SubmitApplication from './pages/SubmitApplication';
 
-// ✅ Admin Dashboard Import
+// Admin Dashboard Import
 import AdminDashboard from './pages/admin/AdminDashboard';
 
-// ✅ Protected Route with Role-Based Redirect
+// Protected Route with Role-Based Redirect
 const ProtectedRoute = ({ children, roleRequired = null }) => {
   const { user, isLoading } = useAuth();
 
@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children, roleRequired = null }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ Check if user has required role for this route
+  // Check if user has required role for this route
   if (roleRequired && user.organization_role !== roleRequired) {
     // Redirect to appropriate dashboard based on actual role
     if (user.organization_role === 'OSAS') {
@@ -45,7 +45,7 @@ const ProtectedRoute = ({ children, roleRequired = null }) => {
   return children;
 };
 
-// ✅ Dashboard Layout Wrapper
+// Dashboard Layout Wrapper
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -93,7 +93,7 @@ function AppRoutes() {
           : <SignUpPage onBack={() => navigate('/login')} />
       } />
 
-      {/* ✅ Admin Routes - OSAS Role Only */}
+      {/* Admin Routes - OSAS Role Only */}
       <Route path="/admin/*" element={
         <ProtectedRoute roleRequired="OSAS">
           <AdminDashboard />

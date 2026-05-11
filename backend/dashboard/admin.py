@@ -2,7 +2,7 @@
 from django.contrib import admin
 from .models import EventApplication, Equipment, EquipmentBorrow
 
-# ✅ Register EventApplication
+#  Register EventApplication
 @admin.register(EventApplication)
 class EventApplicationAdmin(admin.ModelAdmin):
     list_display = ['event_name', 'event_type', 'user', 'status', 'event_date', 'venue', 'created_at']
@@ -20,7 +20,7 @@ class EventApplicationAdmin(admin.ModelAdmin):
     )
 
 
-# ✅ Register Equipment
+#  Register Equipment
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
     list_display = ['equipment_id', 'equipment_name', 'category', 'status', 'condition', 'quantity_total', 'created_at']
@@ -37,7 +37,7 @@ class EquipmentAdmin(admin.ModelAdmin):
     )
 
 
-# ✅ Register EquipmentBorrow
+#  Register EquipmentBorrow
 @admin.register(EquipmentBorrow)
 class EquipmentBorrowAdmin(admin.ModelAdmin):
     list_display = ['equipment', 'user', 'borrow_date', 'expected_return_date', 'status', 'is_overdue']

@@ -29,39 +29,39 @@ class EventApplication(models.Model):
         related_name='applications'
     )
     
-    # ✅ Core event fields
+    #Core event fields
     event_name = models.CharField(max_length=255)
     event_type = models.CharField(max_length=50, choices=EVENT_TYPE_CHOICES)
     description = models.TextField()
     
-    # ✅ DATE FIELDS - event_date is primary, start_date/end_date are aliases for frontend compatibility
+    #Date Fields
     event_date = models.DateField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True, help_text='Alias for event_date')
     end_date = models.DateField(null=True, blank=True)
     
-    # ✅ Time fields
+    #Time fields
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     
-    # ✅ Location/Venue
+    #Location/Venue
     venue = models.CharField(max_length=255, null=True, blank=True)
     
-    # ✅ Content
+    #Content
     purpose = models.TextField(null=True, blank=True)
     
-    # ✅ Equipment as JSON string (SQLite compatible)
+    #Equipment as JSON string (SQLite compatible)
     equipment = models.TextField(default='[]', blank=True, help_text='Store as JSON string')
     
-    # ✅ Numbers & Budget
+    #Numbers & Budget
     expected_attendees = models.IntegerField(null=True, blank=True)
     estimated_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     
-    # ✅ Contact Information
+    #Contact Information
     contact_person = models.CharField(max_length=255, null=True, blank=True)
     contact_email = models.EmailField(null=True, blank=True)
     contact_phone = models.CharField(max_length=20, null=True, blank=True)
     
-    # ✅ Status & Metadata
+    #Status & Metadata
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     document = models.FileField(upload_to='applications/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -84,7 +84,7 @@ class EventApplication(models.Model):
                 return []
         return self.equipment if isinstance(self.equipment, list) else []
     
-    # ✅ IMPROVED SAVE LOGIC
+    #IMPROVED SAVE LOGIC
     def save(self, *args, **kwargs):
         # Kung may event_date pero walang start_date, copy to start_date
         if self.event_date and not self.start_date:
@@ -97,9 +97,7 @@ class EventApplication(models.Model):
         super().save(*args, **kwargs)
 
 
-# =============================================================================
-# ✅ EQUIPMENT INVENTORY MODEL
-# =============================================================================
+#EQUIPMENT INVENTORY MODEL
 class Equipment(models.Model):
     STATUS_CHOICES = [
         ('available', 'Available'),
@@ -147,9 +145,7 @@ class Equipment(models.Model):
         return f"{self.equipment_id} - {self.equipment_name}"
 
 
-# =============================================================================
-# ✅ EQUIPMENT BORROW RECORD MODEL (Tracking borrowed equipment)
-# =============================================================================
+#EQUIPMENT BORROW RECORD MODEL (Tracking borrowed equipment)
 class EquipmentBorrow(models.Model):
     STATUS_CHOICES = [
         ('active', 'Active (Currently Borrowed)'),
@@ -189,3 +185,39 @@ class EquipmentBorrow(models.Model):
         if self.status == 'active' and self.expected_return_date:
             return timezone.now().date() > self.expected_return_date
         return False
+
+
+# NOTIFICATIONS (clickable in-app bell dropdown)
+class Notification(models.Model):
+    NOTIF_TYPE_CHOICES = [
+        ('review', 'Review / Approval'),
+        ('borrow', 'Borrow'),
+        ('return', 'Return'),
+        ('equipment_status', 'Equipment Status'),
+        ('system', 'System'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+
+    notif_type = models.CharField(max_length=50, choices=NOTIF_TYPE_CHOICES, default='system')
+    title = models.CharField(max_length=255)
+    message = models.TextField(blank=True, default='')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Optional payload for routing/click behavior in the frontend
+    # Example: {"route": "/admin/review", "application_id": 123}
+    payload = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        db_table = 'notifications'
+        verbose_name = 'Notification'
+        verbose_name_plural = 'Notifications'
+
+    def __str__(self):
+        return f"{self.title} ({self.user_id})"

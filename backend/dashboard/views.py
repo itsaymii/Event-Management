@@ -12,7 +12,7 @@ import csv
 import io
 import json
 
-from .models import EventApplication, Equipment, EquipmentBorrow
+from .models import EventApplication, Equipment, EquipmentBorrow, Notification
 from .serializers import (
     EventApplicationSerializer,
     AdminApplicationSerializer,
@@ -28,9 +28,64 @@ from .serializers import (
     EquipmentSerializer,
     EquipmentBorrowSerializer,
     parse_equipment_field,          # ← import the shared helper
+    NotificationSerializer,
 )
 
 User = get_user_model()
+
+
+# =============================================================================
+# NOTIFICATION HELPERS
+# =============================================================================
+def _create_notification(user, notif_type, title, message='', payload=None):
+    """
+    Create an in-app notification for the given user.
+    """
+    if not user:
+        return
+    try:
+        Notification.objects.create(
+            user=user,
+            notif_type=notif_type,
+            title=title,
+            message=message or '',
+            payload=payload or None,
+        )
+    except Exception as e:
+        print(f'Notification error: {e}')
+
+
+# =============================================================================
+# NOTIFICATIONS
+# =============================================================================
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def list_notifications(request):
+    """
+    Returns notifications for the current logged-in user.
+    """
+    qs = Notification.objects.filter(user=request.user).order_by('-created_at')[:50]
+    serializer = NotificationSerializer(qs, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def mark_notifications_read(request):
+    """
+    Marks notifications as read. If `all=true`, marks all;
+    otherwise marks only unread items.
+    """
+    all_flag = str(request.data.get('all', 'false')).lower() == 'true'
+    qs = Notification.objects.filter(user=request.user)
+    if all_flag:
+        qs.update(is_read=True)
+    else:
+        qs.filter(is_read=False).update(is_read=True)
+
+    qs = Notification.objects.filter(user=request.user).order_by('-created_at')[:50]
+    serializer = NotificationSerializer(qs, many=True)
+    return Response({'message': 'Notifications marked as read', 'notifications': serializer.data})
 
 
 # =============================================================================
@@ -190,7 +245,38 @@ class EventApplicationViewSet(viewsets.ModelViewSet):
         return EventApplicationSerializer
 
     def perform_create(self, serializer):
+        """
+        Save application and notify OSAS admins that a new application was submitted.
+        Using perform_create() makes this reliable for all create flows.
+        """
         serializer.save(user=self.request.user)
+
+        saved_instance = getattr(serializer, "instance", None)
+        if not saved_instance:
+            print("[NOTIF][NEW APP] No saved_instance found in perform_create()")
+            return
+
+        admins_qs = User.objects.filter(organization_role__iexact='OSAS', is_active=True)
+        print(
+            f"[NOTIF][NEW APP] perform_create for app_id={saved_instance.id} "
+            f"event_name={saved_instance.event_name!r} admins_qs_count={admins_qs.count()}"
+        )
+
+        created = 0
+        for admin_user in admins_qs:
+            try:
+                _create_notification(
+                    admin_user,
+                    notif_type='review',
+                    title='New Application Submitted',
+                    message=f'Application \"{saved_instance.event_name}\" was submitted by {saved_instance.user.username}.',
+                    payload={'route': '/admin/review', 'application_id': saved_instance.id}
+                )
+                created += 1
+            except Exception as e:
+                print(f"[NOTIF][NEW APP] create_notification failed for user_id={admin_user.id}: {e}")
+
+        print(f"[NOTIF][NEW APP] notifications created_attempts={created} for app_id={saved_instance.id}")
 
     def create(self, request, *args, **kwargs):
         """
@@ -215,6 +301,8 @@ class EventApplicationViewSet(viewsets.ModelViewSet):
         print(f"{'='*60}\n")
 
         self.perform_create(serializer)
+
+        # ✅ Notification to OSAS admins is handled in perform_create()
 
         # ── What actually landed in the DB ────────────────────────────────────
         saved_instance = serializer.instance
@@ -426,6 +514,13 @@ class AdminApplicationViewSet(viewsets.ModelViewSet):
 
         if notify_user:
             self._send_status_notification(application, action_type, reason)
+            _create_notification(
+                application.user,
+                notif_type='review',
+                title=f'Application {action_type}d',
+                message=f'Your event application "{application.event_name}" has been {action_type}d.',
+                payload={'route': '/applications', 'application_id': application.id}
+            )
 
         return Response({
             'status':          application.status,
@@ -483,17 +578,36 @@ class AdminApplicationViewSet(viewsets.ModelViewSet):
                 # Log error but don't fail the approval
                 print(f"Error creating equipment borrow records: {str(e)}")
 
+        _create_notification(
+            application.user,
+            notif_type='review',
+            title='Application Approved',
+            message=f'Your event application "{application.event_name}" has been approved.',
+            payload={'route': '/applications', 'application_id': application.id}
+        )
+
         return Response({'status': 'approved', 'message': 'Approved', 'application_id': application.id})
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         application = self.get_object()
+        reason = request.data.get('reason', '')
         application.status = 'rejected'
         application.save()
+
+        _create_notification(
+            application.user,
+            notif_type='review',
+            title='Application Rejected',
+            message=f'Your event application "{application.event_name}" has been rejected.'
+                    + (f' Reason: {reason}' if reason else ''),
+            payload={'route': '/applications', 'application_id': application.id}
+        )
+
         return Response({
             'status':         'rejected',
             'message':        'Rejected',
-            'reason':         request.data.get('reason', ''),
+            'reason':         reason,
             'application_id': application.id,
         })
 
@@ -506,7 +620,25 @@ class AdminApplicationViewSet(viewsets.ModelViewSet):
         action_type = serializer.validated_data['action']
         reason      = serializer.validated_data.get('reason', '')
         new_status  = 'approved' if action_type == 'approve' else 'rejected'
-        updated     = self.get_queryset().filter(id__in=app_ids).update(status=new_status)
+
+        qs = self.get_queryset().filter(id__in=app_ids).select_related('user')
+        apps = list(qs)
+
+        updated = qs.update(status=new_status)
+
+        # Create notifications per application (so user gets correct message + title)
+        for app in apps:
+            if app.user:
+                _create_notification(
+                    app.user,
+                    notif_type='review',
+                    title='Application Approved' if new_status == 'approved' else 'Application Rejected',
+                    message=(
+                        f'Your event application "{app.event_name}" has been {new_status}.'
+                        + (f' Reason: {reason}' if new_status == 'rejected' and reason else '')
+                    ),
+                    payload={'route': '/applications', 'application_id': app.id}
+                )
 
         return Response({
             'processed':  updated,
@@ -706,6 +838,15 @@ class AdminEquipmentViewSet(viewsets.ModelViewSet):
         equipment = self.get_object()
         equipment.status = 'available'
         equipment.save()
+
+        _create_notification(
+            request.user,
+            notif_type='equipment_status',
+            title='Equipment status updated',
+            message=f'{equipment.equipment_name} is now available.',
+            payload={'route': '/admin/equipment', 'equipment_id': equipment.id}
+        )
+
         return Response({'status': 'Equipment marked as available'})
 
     @action(detail=True, methods=['post'])
@@ -714,6 +855,15 @@ class AdminEquipmentViewSet(viewsets.ModelViewSet):
         equipment = self.get_object()
         equipment.status = 'maintenance'
         equipment.save()
+
+        _create_notification(
+            request.user,
+            notif_type='equipment_status',
+            title='Equipment status updated',
+            message=f'{equipment.equipment_name} is now under maintenance.',
+            payload={'route': '/admin/equipment', 'equipment_id': equipment.id}
+        )
+
         return Response({'status': 'Equipment marked as maintenance'})
 
 
@@ -815,6 +965,15 @@ class AdminEquipmentBorrowViewSet(viewsets.ModelViewSet):
             borrow_record.status = 'damaged_return'
         else:
             equipment.status = 'available'
+
+        # In-app notification for the borrower
+        _create_notification(
+            borrow_record.user,
+            notif_type='return',
+            title='Equipment returned',
+            message=f'Your borrowed equipment has been returned.',
+            payload={'route': '/admin/borrowed', 'borrow_id': borrow_record.id, 'equipment_id': equipment.id}
+        )
         
         borrow_record.save()
         equipment.save()
@@ -873,6 +1032,14 @@ class AdminEquipmentBorrowViewSet(viewsets.ModelViewSet):
                 expected_return_date=expected_return_date,
                 notes=notes,
                 status='active'
+            )
+
+            _create_notification(
+                user,
+                notif_type='borrow',
+                title='Equipment borrowed',
+                message=f'You borrowed {equipment.equipment_name}. Expected return: {expected_return_date}.',
+                payload={'route': '/admin/borrowed', 'borrow_id': borrow_record.id, 'equipment_id': equipment.id}
             )
 
             # Update equipment status if all units are borrowed

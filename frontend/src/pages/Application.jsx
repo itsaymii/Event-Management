@@ -47,6 +47,12 @@ const ApplicationsPage = ({ onNavigate, onLogout }) => {
   const [error, setError] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
+  // ✅ Notifications (OSAS)
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const notifDropdownRef = useRef(null);
+
   const [filters, setFilters] = useState({
     status: 'all',
     dateRange: 'all',
@@ -65,6 +71,9 @@ const ApplicationsPage = ({ onNavigate, onLogout }) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowProfileDropdown(false);
       }
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target)) {
+        setShowNotifDropdown(false);
+      }
       if (modalRef.current && !modalRef.current.contains(event.target)) {
         setShowDetailsModal(false);
       }
@@ -72,6 +81,35 @@ const ApplicationsPage = ({ onNavigate, onLogout }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setNotifLoading(true);
+      const res = await api.get('/admin/notifications/');
+      setNotifications(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch notifications', e);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.post('/admin/notifications/mark_read/', { all: true });
+      await fetchNotifications();
+    } catch (e) {
+      console.error('Failed to mark notifications as read', e);
+    }
+  };
+
+  const openNotifications = async () => {
+    const next = !showNotifDropdown;
+    setShowNotifDropdown(next);
+    if (next && notifications.length === 0) {
+      await fetchNotifications();
+    }
+  };
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -257,8 +295,80 @@ const ApplicationsPage = ({ onNavigate, onLogout }) => {
           <div className="flex items-center gap-5">
             <Search className="text-slate-400 cursor-pointer hover:text-slate-600 transition-colors" size={20} />
             <div className="relative">
-              <Bell className="text-slate-400 cursor-pointer hover:text-slate-600 transition-colors" size={20} />
-              <span className="absolute -top-1 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              <button
+                type="button"
+                onClick={openNotifications}
+                className="relative p-1"
+                aria-label="Notifications"
+              >
+                <Bell className="text-slate-400 cursor-pointer hover:text-slate-600 transition-colors" size={20} />
+                {Array.isArray(notifications) && notifications.some((n) => !n.is_read) && (
+                  <span className="absolute -top-1 -right-0.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                )}
+              </button>
+
+              {showNotifDropdown && (
+                <div
+                  ref={notifDropdownRef}
+                  className="absolute right-0 top-full mt-2 w-[360px] bg-white rounded-2xl border border-slate-200 shadow-lg z-50 overflow-hidden"
+                >
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <p className="text-sm font-black text-slate-900">Notifications</p>
+                    <button
+                      onClick={markAllRead}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                      disabled={notifLoading}
+                    >
+                      Mark all read
+                    </button>
+                  </div>
+
+                  <div className="max-h-[340px] overflow-y-auto">
+                    {notifLoading ? (
+                      <div className="p-4 text-sm text-slate-500">Loading...</div>
+                    ) : notifications.length === 0 ? (
+                      <div className="p-4 text-sm text-slate-500">No notifications.</div>
+                    ) : (
+                      notifications.map((n) => (
+                        <button
+                          key={n.id}
+                          type="button"
+                          className="w-full text-left px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors"
+                          onClick={async () => {
+                            try {
+                              if (!n.is_read) {
+                                await api.post('/admin/notifications/mark_read/', { all: true });
+                                await fetchNotifications();
+                              }
+                              const route = n?.payload?.route;
+                              if (route) window.location.href = route;
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`mt-1 w-2.5 h-2.5 rounded-full ${
+                                n.is_read ? 'bg-slate-300' : 'bg-blue-600'
+                              }`}
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-black text-slate-900">{n.title}</p>
+                              {n.message && (
+                                <p className="text-xs text-slate-600 mt-1 line-clamp-3">{n.message}</p>
+                              )}
+                              <p className="text-[10px] text-slate-400 mt-2">
+                                {new Date(n.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="relative" ref={dropdownRef}>
               <div

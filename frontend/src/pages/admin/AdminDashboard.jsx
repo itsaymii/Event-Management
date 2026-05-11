@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, Calendar, Settings, LogOut, Bell, Search, ChevronDown, Package } from 'lucide-react';
+import api from '../../utils/api';
 import Logo from '../../images/Logo.png';
 import { useAuth } from '../../context/AuthContext';
 import AdminOverview from './AdminOverview';
@@ -14,6 +15,11 @@ const AdminDashboard = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+
+  const notifDropdownRef = useRef(null);
 
   // ✅ Redirect non-OSAS users
   if (user && user.organization_role !== 'OSAS') {
@@ -33,6 +39,47 @@ const AdminDashboard = () => {
     logout();
     navigate('/login');
   };
+
+  const fetchNotifications = async () => {
+    try {
+      setNotifLoading(true);
+      const res = await api.get('/admin/notifications/');
+      setNotifications(res.data || []);
+    } catch (e) {
+      console.error('Failed to fetch notifications', e);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.post('/admin/notifications/mark_read/', { all: true });
+      await fetchNotifications();
+    } catch (e) {
+      console.error('Failed to mark notifications as read', e);
+    }
+  };
+
+  const handleOpenNotifications = async () => {
+    const next = !showNotifDropdown;
+    setShowNotifDropdown(next);
+    if (next && notifications.length === 0) {
+      await fetchNotifications();
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!showNotifDropdown) return;
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target)) {
+        setShowNotifDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifDropdown]);
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-950">
@@ -95,10 +142,75 @@ const AdminDashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+            <button
+              onClick={handleOpenNotifications}
+              className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors"
+              aria-label="Notifications"
+            >
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {Array.isArray(notifications) && notifications.some(n => !n.is_read) && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
             </button>
+
+            {showNotifDropdown && (
+              <div ref={notifDropdownRef} className="absolute right-8 top-full mt-2 w-[360px] bg-white rounded-xl border border-slate-200 shadow-lg z-50">
+                <div className="p-3 border-b border-slate-100 flex items-center justify-between">
+                  <p className="text-sm font-bold text-slate-900">Notifications</p>
+                  <button
+                    onClick={markAllRead}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                    disabled={notifLoading}
+                  >
+                    Mark all read
+                  </button>
+                </div>
+
+                <div className="max-h-[360px] overflow-y-auto">
+                  {notifLoading ? (
+                    <div className="p-4 text-sm text-slate-500">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="p-4 text-sm text-slate-500">No notifications.</div>
+                  ) : (
+                    notifications.map((n) => (
+                        <button
+                          key={n.id}
+                          className="w-full text-left px-3 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors"
+                          onClick={async () => {
+                            try {
+                              // Mark notification as read (backend only supports all/unread in this implementation)
+                              if (!n.is_read) {
+                                await api.post('/admin/notifications/mark_read/', { all: true });
+                                await fetchNotifications();
+                              }
+
+                              const route = n?.payload?.route;
+                              if (route) {
+                                window.location.href = route;
+                              }
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }}
+                        >
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-0.5 h-2.5 w-2.5 rounded-full ${n.is_read ? 'bg-slate-300' : 'bg-blue-600'}`} />
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-slate-900">{n.title}</p>
+                            {n.message && (
+                              <p className="text-xs text-slate-600 mt-1 line-clamp-3">{n.message}</p>
+                            )}
+                            <p className="text-[10px] text-slate-400 mt-2">
+                              {new Date(n.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="relative">
               <button

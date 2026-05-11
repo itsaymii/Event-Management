@@ -4,7 +4,7 @@ import uuid
 
 
 # =============================================================================
-# ✅ CUSTOM USER MANAGER (FIXED for createsuperuser)
+# CUSTOM USER MANAGER (FIXED for createsuperuser)
 # =============================================================================
 class CustomUserManager(BaseUserManager):
     """
@@ -19,7 +19,7 @@ class CustomUserManager(BaseUserManager):
         
         email = self.normalize_email(email)
         
-        # ✅ Auto-generate username from email if not provided (for Django compatibility)
+        # Auto-generate username from email if not provided (for Django compatibility)
         if 'username' not in extra_fields or not extra_fields.get('username'):
             extra_fields['username'] = email.split('@')[0]
         
@@ -31,7 +31,7 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         """
         Create and save a SuperUser with the given email and password.
-        ✅ This fixes the createsuperuser command!
+        This fixes the createsuperuser command!
         """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -43,7 +43,7 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         
-        # ✅ Auto-generate username from email for Django admin compatibility
+        # Auto-generate username from email for Django admin compatibility
         if 'username' not in extra_fields or not extra_fields.get('username'):
             extra_fields['username'] = email.split('@')[0]
         
@@ -52,7 +52,7 @@ class CustomUserManager(BaseUserManager):
 
 
 # =============================================================================
-# ✅ CUSTOM USER MODEL
+# CUSTOM USER MODEL
 # =============================================================================
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [

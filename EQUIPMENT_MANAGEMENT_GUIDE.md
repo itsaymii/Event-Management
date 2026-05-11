@@ -1,37 +1,37 @@
-# 🎯 Equipment Management System - PELEC Admin Dashboard
+# Equipment Management System - PELEC Admin Dashboard
 
 ## Overview
 A complete equipment inventory and tracking system integrated into the PELEC admin dashboard. Monitor equipment availability, track borrowed items, manage returns, and detect overdue equipment.
 
 ---
 
-## 📋 Features
+## Features
 
 ### Equipment Inventory Management
-- ✅ **Add/Edit/Delete Equipment** - Manage equipment inventory
-- ✅ **Status Tracking** - Available, Borrowed, Maintenance, Damaged
-- ✅ **Condition Assessment** - Excellent, Good, Fair, Poor
-- ✅ **Quantity Management** - Track total and available quantities
-- ✅ **Categories** - Organize equipment by type (Audio, Visual, Lighting, Accessories)
-- ✅ **Search & Filter** - Find equipment quickly
-- ✅ **Purchase Info** - Record purchase date and cost
+- **Add/Edit/Delete Equipment** - Manage equipment inventory
+- **Status Tracking** - Available, Borrowed, Maintenance, Damaged
+- **Condition Assessment** - Excellent, Good, Fair, Poor
+- **Quantity Management** - Track total and available quantities
+- **Categories** - Organize equipment by type (Audio, Visual, Lighting, Accessories)
+- **Search & Filter** - Find equipment quickly
+- **Purchase Info** - Record purchase date and cost
 
 ### Borrow/Return Tracking
-- ✅ **Borrow Records** - Track who borrowed what and when
-- ✅ **Expected Return Dates** - Set borrow duration
-- ✅ **Overdue Detection** - Automatic alerts for late returns
-- ✅ **Return Processing** - Record condition on return
-- ✅ **Damage Reporting** - Document equipment damage
-- ✅ **Return History** - View all past borrow records
+- **Borrow Records** - Track who borrowed what and when
+- **Expected Return Dates** - Set borrow duration
+- **Overdue Detection** - Automatic alerts for late returns
+- **Return Processing** - Record condition on return
+- **Damage Reporting** - Document equipment damage
+- **Return History** - View all past borrow records
 
 ### Dashboard Analytics
-- ✅ **Equipment Statistics** - Total, Available, Borrowed, Maintenance, Damaged counts
-- ✅ **Overdue Alerts** - Visual warnings for overdue items
-- ✅ **Real-time Status** - Live availability tracking
+- **Equipment Statistics** - Total, Available, Borrowed, Maintenance, Damaged counts
+- **Overdue Alerts** - Visual warnings for overdue items
+- **Real-time Status** - Live availability tracking
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Access Equipment Management
 In the admin dashboard sidebar, you'll see two new menu items:
@@ -110,7 +110,7 @@ Shows all overdue equipment with:
 
 ---
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Equipment Endpoints
 ```
@@ -147,7 +147,7 @@ POST   /api/admin/equipment-borrow/{id}/record_return/  # Record return
 
 ---
 
-## 📊 Database Schema
+## Database Schema
 
 ### Equipment Model
 ```python
@@ -185,7 +185,7 @@ POST   /api/admin/equipment-borrow/{id}/record_return/  # Record return
 
 ---
 
-## 📱 Frontend Components
+## Frontend Components
 
 ### AdminEquipmentManagement.jsx
 Main equipment inventory management interface
@@ -209,7 +209,7 @@ Borrow record management and return processing
 
 ---
 
-## 🛠️ Administrative Tasks
+## Administrative Tasks
 
 ### Sample Data
 To populate sample equipment for testing:
@@ -232,14 +232,14 @@ Equipment can also be managed via Django admin:
 
 ---
 
-## 🔒 Permissions
+## Permissions
 - **OSAS Role Required** - Only OSAS administrators can access equipment management
 - **Automatic Equipment Updates** - Equipment status and availability update automatically on return
 - **Audit Trail** - All borrow/return records are timestamped
 
 ---
 
-## 💡 Usage Tips
+## Usage Tips
 
 ### Best Practices
 1. **Unique IDs** - Use consistent equipment ID format (e.g., CAT-001, CAT-002)
@@ -272,7 +272,7 @@ Equipment can also be managed via Django admin:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Equipment Not Showing
 - Check if equipment status filter is applied
@@ -291,11 +291,11 @@ Equipment can also be managed via Django admin:
 
 ---
 
-## 📞 Support
+## Support
 For issues or questions, contact the development team or check the system logs.
 
 ---
 
 **Last Updated:** May 9, 2026
 **System Version:** 1.0
-**Status:** ✅ Production Ready
+**Status:** Production Ready
