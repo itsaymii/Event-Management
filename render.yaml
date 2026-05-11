@@ -2,34 +2,32 @@ services:
   - type: web
     name: pelec-api
     runtime: python
-    region: oregon
+    rootDir: backend
 
-    # Keep build fast; do collectstatic/migrate at startup.
-    buildCommand: "cd backend && pip install -r requirements.txt"
-
-    startCommand: "cd backend && python manage.py collectstatic --noinput && python manage.py migrate && gunicorn backend.wsgi:application"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "gunicorn backend.wsgi:application"
 
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"
 
-      # Set these in Render dashboard (don't hardcode secrets)
+      # Set in Render dashboard (recommended)
       - key: SECRET_KEY
         value: ""
       - key: DEBUG
         value: "False"
 
-      # Django env format for dj-database-url / supported codepaths
       - key: DATABASE_URL
-        value: ""
+        fromDatabase:
+          name: pelec-db
+          property: connectionString
 
       - key: ALLOWED_HOSTS
         value: "yourdomain.onrender.com,www.yourdomain.onrender.com"
-
       - key: FRONTEND_URLS
         value: "https://event-management-indol-phi.vercel.app/"
 
 databases:
-  - name: event-management-db
+  - name: pelec-db
     plan: standard
     region: oregon
