@@ -19,8 +19,8 @@ services:
 
       - key: DATABASE_URL
         fromDatabase:
-          name: pelec-db
-          property: connectionString
+          name: event-management-db
+          property: postgresql://event_management_db_y0qd_user:73cEOp2hfX6uQ6BQvHjmdG7u0TppshQ8@dpg-d80t8g7avr4c73arnl40-a/event_management_db_y0qd
 
       - key: ALLOWED_HOSTS
         value: "yourdomain.onrender.com,www.yourdomain.onrender.com"
@@ -28,6 +28,6 @@ services:
         value: "https://event-management-indol-phi.vercel.app/"
 
 databases:
-  - name: pelec-db
+  - name: event-management-db
     plan: standard
-    region: oregon
+    region: singapore
