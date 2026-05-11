@@ -302,7 +302,46 @@ python manage.py populate_equipment
 
 ---
 
-## 13) Production notes (high-level)
+## 13) Production deployment
+
+### Quick Start
+This project is configured for **Vercel** (frontend) and **Render** (backend) deployment:
+
+- **Deployment Guide:** See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for step-by-step instructions
+- **Deployment Checklist:** See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for verification steps
+
+### Environment Variables
+
+**Backend** (`backend/.env`):
+```
+SECRET_KEY=<generate-secure-key>
+DEBUG=False
+DATABASE_URL=postgresql://user:pass@host:port/dbname
+ALLOWED_HOSTS=yourdomain.onrender.com
+FRONTEND_URLS=https://your-frontend.vercel.app
+```
+
+**Frontend** (`frontend/.env.production`):
+```
+VITE_API_URL=https://your-backend.onrender.com/api
+```
+
+See [backend/.env.example](backend/.env.example) for full reference.
+
+### Deployment Platforms
+- **Frontend:** [Vercel](https://vercel.com) - Git-connected auto-deployment
+- **Backend:** [Render](https://render.com) - Git-connected auto-deployment with PostgreSQL
+- **Database:** PostgreSQL via Render
+
+### Key Production Configurations
+- Static files: Handled by WhiteNoise middleware + gunicorn
+- Migrations: Automatic on Render deployment
+- CORS: Restricted to frontend URL (environment variable)
+- JWT: Tokens expire in 1 day (refresh tokens last 7 days)
+
+---
+
+## 14) Production notes (high-level)
 
 - Replace `SECRET_KEY` with a real secret value
 - Configure allowed hosts and CORS for your production domains
@@ -312,10 +351,12 @@ python manage.py populate_equipment
 
 ---
 
-## 14) Key documentation files
+## 15) Key documentation files
 
 - **API examples:** `API_REFERENCE.md`
 - **Equipment workflow:** `EQUIPMENT_MANAGEMENT_GUIDE.md`
 - **Implementation checklist:** `IMPLEMENTATION_CHECKLIST.md`
+- **Deployment guide:** `DEPLOYMENT_GUIDE.md`
+- **Deployment checklist:** `DEPLOYMENT_CHECKLIST.md`
 
 ---

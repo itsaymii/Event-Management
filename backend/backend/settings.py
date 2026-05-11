@@ -5,9 +5,13 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-change-this-secret-key'
+# Security: Get SECRET_KEY from environment (required in production)
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-secret-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = ['*']
+
+# ALLOWED_HOSTS: Accept from environment or use defaults
+ALLOWED_HOSTS_STR = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -99,7 +103,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Add frontend URLs from environment (for production deployments)
+FRONTEND_URLS = os.environ.get('FRONTEND_URLS', '').strip()
+if FRONTEND_URLS:
+    CORS_ALLOWED_ORIGINS.extend([url.strip() for url in FRONTEND_URLS.split(',') if url.strip()])
 
 CORS_ALLOW_CREDENTIALS = True
 
