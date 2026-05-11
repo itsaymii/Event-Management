@@ -30,6 +30,6 @@ services:
         value: "https://event-management-indol-phi.vercel.app/"
 
 databases:
-  - name: pelec-db
+  - name: event-management-db
     plan: standard
     region: oregon
