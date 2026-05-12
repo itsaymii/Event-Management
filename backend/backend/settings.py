@@ -101,6 +101,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://localhost:3000',  
     'http://127.0.0.1:3000',
+    "https://event-management-git-main-aimee-rose-s-projects.vercel.app"
 ]
 
 # Add frontend URLs from environment (for production deployments)
