@@ -32,6 +32,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const apiBase = API_BASE();
+  
+  // 🔍 DEBUG: Log API URL at startup
+  useEffect(() => {
+    console.log('🌐 API Base URL:', apiBase);
+    console.log('📦 VITE_API_URL env:', import.meta.env.VITE_API_URL);
+  }, [apiBase]);
 
   // ✅ Load auth state on mount
   useEffect(() => {
