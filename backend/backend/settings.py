@@ -112,7 +112,7 @@ if FRONTEND_URLS:
         if url:
             # Add https:// if no scheme is provided
             if not url.startswith(('http://', 'https://')):
-                url = f'https://{url}'
+                url = f'https://event-management-six-chi.vercel.app/'
             CORS_ALLOWED_ORIGINS.append(url)
 
 CORS_ALLOW_CREDENTIALS = True
