@@ -10,7 +10,7 @@ services:
       - key: PYTHON_VERSION
         value: "3.11"
       - key: SECRET_KEY
-        value: ""
+        value: "django-insecure-generate-a-secure-key-on-render-dashboard"
       - key: DEBUG
         value: "False"
       - key: DATABASE_URL
@@ -18,9 +18,9 @@ services:
           name: pelec-db
           property: connectionString
       - key: ALLOWED_HOSTS
-        value: "yourdomain.onrender.com,www.yourdomain.onrender.com"
+        value: "pelec-backend.onrender.com,www.pelec-backend.onrender.com"
       - key: FRONTEND_URLS
-        value: "https://event-management-indol-phi.vercel.app/"
+        value: "https://pelec-frontend.vercel.app"
 
 databases:
   - name: pelec-db
