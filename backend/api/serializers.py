@@ -5,10 +5,12 @@ from .models import CustomUser
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
     confirm_password = serializers.CharField(write_only=True, min_length=6)
+    username = serializers.CharField(required=False, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'first_name', 'password', 'confirm_password', 'organization_role']
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'password', 'confirm_password', 'organization_role']
 
     def validate(self, data):
         if data['password'] != data['confirm_password']:
@@ -51,10 +53,20 @@ class UserLoginSerializer(serializers.Serializer):
             except CustomUser.DoesNotExist:
                 raise serializers.ValidationError({'email': 'User not found.'})
         else:
+            # IMPORTANT:
+            # In this project, registration sets:
+            #   username = validated_data['email']
+            # So users typically must log in using their email even if the request
+            # payload field is `username`.
+            #
+            # To make login robust, try username first, then fall back to email.
             try:
                 user = CustomUser.objects.get(username=username)
             except CustomUser.DoesNotExist:
-                raise serializers.ValidationError({'username': 'User not found.'})
+                try:
+                    user = CustomUser.objects.get(email=username)
+                except CustomUser.DoesNotExist:
+                    raise serializers.ValidationError({'username': 'User not found.'})
 
         if not user.check_password(password):
             raise serializers.ValidationError({'password': 'Invalid password.'})
