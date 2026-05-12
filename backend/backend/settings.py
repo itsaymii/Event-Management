@@ -110,9 +110,11 @@ if FRONTEND_URLS:
     for url in FRONTEND_URLS.split(','):
         url = url.strip()
         if url:
+            # Remove trailing slash to normalize URLs
+            url = url.rstrip('/')
             # Add https:// if no scheme is provided
             if not url.startswith(('http://', 'https://')):
-                url = f'https://event-management-six-chi.vercel.app/'
+                url = f'https://{url}'
             CORS_ALLOWED_ORIGINS.append(url)
 
 CORS_ALLOW_CREDENTIALS = True
