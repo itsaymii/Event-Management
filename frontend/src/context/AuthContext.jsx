@@ -60,12 +60,19 @@ export const AuthProvider = ({ children }) => {
   const login = async (identifier, password) => {
     setIsLoading(true);
     try {
-      // Build payload - send both email & username to avoid mismatch
-      const payload = {
-        password: password.trim(),
-        email: identifier.includes('@') ? identifier.trim() : '',
-        username: identifier.includes('@') ? identifier.trim().split('@')[0] : identifier.trim(),
-      };
+      // Build payload for SimpleJWT custom serializer:
+      // - If identifier is an email, send ONLY `email`
+      // - If identifier is a username, send ONLY `username`
+      // (Avoid sending both fields at once.)
+      const payload = identifier.includes('@')
+        ? {
+            password: password.trim(),
+            email: identifier.trim(),
+          }
+        : {
+            password: password.trim(),
+            username: identifier.trim(),
+          };
 
       const res = await axios.post(`${API_BASE}/auth/login/`, payload, {
         headers: { 'Content-Type': 'application/json' },
