@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
       // Build payload - send both email & username to avoid mismatch
       const payload = {
         password: password.trim(),
-        email: identifier.includes('@') ? identifier.trim() : identifier.trim(), // backend can accept either
+        email: identifier.includes('@') ? identifier.trim() : '',
         username: identifier.includes('@') ? identifier.trim().split('@')[0] : identifier.trim(),
       };
 
