@@ -101,13 +101,19 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
     'http://localhost:3000',  
     'http://127.0.0.1:3000',
-    "https://event-management-git-main-aimee-rose-s-projects.vercel.app"
 ]
 
 # Add frontend URLs from environment (for production deployments)
 FRONTEND_URLS = os.environ.get('FRONTEND_URLS', '').strip()
 if FRONTEND_URLS:
-    CORS_ALLOWED_ORIGINS.extend([url.strip() for url in FRONTEND_URLS.split(',') if url.strip()])
+    # Process each URL: ensure it has a scheme (https://)
+    for url in FRONTEND_URLS.split(','):
+        url = url.strip()
+        if url:
+            # Add https:// if no scheme is provided
+            if not url.startswith(('http://', 'https://')):
+                url = f'https://{event-management-git-main-aimee-rose-s-projects.vercel.app}'
+            CORS_ALLOWED_ORIGINS.append(url)
 
 CORS_ALLOW_CREDENTIALS = True
 
