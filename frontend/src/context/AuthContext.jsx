@@ -27,9 +27,17 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(null);
 
-  const API_BASE =
-    (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim()) ||
-    `${window.location.origin}/api`;
+  const API_BASE = (() => {
+    const envBase = (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim()) || '';
+    const originApi = `${window.location.origin}/api`;
+    const base = envBase || originApi;
+
+    // Ensure "/api" is present once
+    if (base.endsWith('/api')) return base;
+    if (base.endsWith('/api/')) return base.slice(0, -1);
+    if (base.includes('/api/')) return base.replace(/\/+$/, '');
+    return `${base.replace(/\/+$/, '')}/api`;
+  })();
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -100,6 +108,8 @@ export const AuthProvider = ({ children }) => {
 
     } catch (err) {
       console.error('Login error:', err);
+      console.error('Login error response status:', err.response?.status);
+      console.error('Login error response data:', err.response?.data);
       
       let errorMsg = 'Login failed. Please try again.';
       
