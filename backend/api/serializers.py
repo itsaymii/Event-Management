@@ -20,15 +20,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
+        username = validated_data.pop('username', None)
+        
+        # Use the provided username, or auto-generate from email
+        if not username:
+            username = validated_data['email'].split('@')[0]
 
         user = CustomUser.objects.create_user(
-            username=validated_data['email'],
             email=validated_data['email'],
-            first_name=validated_data['first_name'],
+            password=password,  # ✅ Pass password to create_user
+            username=username,  # ✅ Pass username properly
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
             organization_role=validated_data.get('organization_role', 'User'),
         )
-        user.set_password(password)
-        user.save()
         return user
 
 
