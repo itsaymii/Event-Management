@@ -110,6 +110,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Login error:', err);
       console.error('Login error response status:', err.response?.status);
       console.error('Login error response data:', err.response?.data);
+      console.error('Login error detail value:', err.response?.data?.detail);
       
       let errorMsg = 'Login failed. Please try again.';
       

@@ -20,9 +20,9 @@ services:
       - key: ALLOWED_HOSTS
         value: "pelec-backend.onrender.com,www.pelec-backend.onrender.com"
       - key: FRONTEND_URLS
-        value: "https://pelec-frontend.vercel.app"
+        value: "https://event-management-six-chi.vercel.app/"
 
 databases:
   - name: pelec-db
     plan: standard
-    region: oregon
+    region: singapore
