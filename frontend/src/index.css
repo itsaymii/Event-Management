@@ -1,4 +1,4 @@
-/* Tailwind CSS (v4) entrypoint */
+/* Tailwind CSS v4 entrypoint */
 @import "tailwindcss";
 
 @theme {
@@ -21,8 +21,7 @@ html {
 
 body {
   min-height: 100vh;
-  background-color: #f8fafc; /* slate-50 */
-  color: #020617; /* slate-950 */
+  @apply bg-slate-50 text-slate-950;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;

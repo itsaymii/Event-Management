@@ -112,7 +112,7 @@ if FRONTEND_URLS:
         if url:
             # Add https:// if no scheme is provided
             if not url.startswith(('http://', 'https://')):
-                url = f'https://event-management-git-main-aimee-rose-s-projects.vercel.app'
+                url = f'https://{url}'
             CORS_ALLOWED_ORIGINS.append(url)
 
 CORS_ALLOW_CREDENTIALS = True
