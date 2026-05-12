@@ -27,7 +27,9 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api';
+  const API_BASE =
+    (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.trim()) ||
+    `${window.location.origin}/api`;
 
   // Check if user is already logged in on mount
   useEffect(() => {

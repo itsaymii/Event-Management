@@ -449,7 +449,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        email    = (attrs.get('email')    or '').strip()
+        # NOTE: Avoid relying on Django's `authenticate()` because it can differ by
+        # auth backend / USERNAME_FIELD handling across environments.
+        email    = (attrs.get('email') or '').strip()
         username = (attrs.get('username') or '').strip()
         password = (attrs.get('password') or '').strip()
 
@@ -458,10 +460,19 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if not email and not username:
             raise serializers.ValidationError({'detail': 'Email or username is required'})
 
-        login_identifier = email if email else username
-        user = authenticate(request=self.context.get('request'), username=login_identifier, password=password)
+        if email:
+            # Be tolerant of casing differences between local & deployed DBs
+            try:
+                user = User.objects.get(email__iexact=email)
+            except User.DoesNotExist:
+                user = None
+        else:
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                user = None
 
-        if not user:
+        if not user or not user.check_password(password):
             raise serializers.ValidationError({'detail': 'Invalid credentials'})
         if not user.is_active:
             raise serializers.ValidationError({'detail': 'User account is disabled'})
