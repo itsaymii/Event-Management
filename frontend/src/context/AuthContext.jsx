@@ -1,18 +1,14 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// src/context/AuthContext.jsx - FINAL FIXED VERSION
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-// Helper function to format API errors (handles both string and array)
+// ✅ Helper: Format API errors (handles string, array, or object)
 const formatApiError = (errorValue) => {
   if (!errorValue) return '';
-  if (Array.isArray(errorValue)) {
-    return errorValue.join(', ');
-  }
-  if (typeof errorValue === 'string') {
-    return errorValue;
-  }
+  if (Array.isArray(errorValue)) return errorValue.filter(Boolean).join(', ');
+  if (typeof errorValue === 'string') return errorValue;
   if (typeof errorValue === 'object') {
     return Object.values(errorValue)
       .map(v => formatApiError(v))
@@ -27,101 +23,119 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(null);
 
-  const API_BASE = 'http://127.0.0.1:8000/api';
-
-  // Check if user is already logged in on mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem('access_token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      // Parse and ensure organization_role is uppercase
-      const parsedUser = JSON.parse(storedUser);
-      if (parsedUser.organization_role) {
-        parsedUser.organization_role = parsedUser.organization_role.toUpperCase();
-      }
-      setUser(parsedUser);
-    }
-    setIsLoading(false);
+  // ✅ Simplified, robust API_BASE
+  const API_BASE = useCallback(() => {
+    const env = import.meta.env.VITE_API_URL?.trim();
+    if (env) return env.endsWith('/api') ? env : `${env.replace(/\/+$/, '')}/api`;
+    const origin = window.location.origin;
+    return origin.endsWith('/api') ? origin : `${origin.replace(/\/+$/, '')}/api`;
   }, []);
 
-  // Login function - FIXED with uppercase role & debug logs
+  const apiBase = API_BASE();
+  
+  // 🔍 DEBUG: Log API URL at startup
+  useEffect(() => {
+    console.log('🌐 API Base URL:', apiBase);
+    console.log('📦 VITE_API_URL env:', import.meta.env.VITE_API_URL);
+  }, [apiBase]);
+
+  // ✅ Load auth state on mount
+  useEffect(() => {
+    const initAuth = () => {
+      const storedToken = localStorage.getItem('access_token');
+      const storedUser = localStorage.getItem('user');
+      if (storedToken && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser.organization_role) {
+            parsedUser.organization_role = parsedUser.organization_role.toUpperCase();
+          }
+          setToken(storedToken);
+          setUser(parsedUser);
+        } catch (e) {
+          console.error('Failed to parse stored auth:', e);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+        }
+      }
+      setIsLoading(false);
+    };
+    initAuth();
+  }, []);
+
+  // ✅ FIXED LOGIN - handles array/string errors, email/username login
   const login = async (identifier, password) => {
     setIsLoading(true);
     try {
-      // Build payload - send both fields, backend will accept either
-      const payload = {
-        password: password.trim(),
-      };
-      
-      // Backend accepts 'email' or 'username' field
-      if (identifier.includes('@')) {
-        payload.email = identifier.trim();
-      } else {
-        payload.username = identifier.trim();
-      }
+      const payload = identifier.includes('@')
+        ? { email: identifier.trim().toLowerCase(), password: password.trim() }
+        : { username: identifier.trim(), password: password.trim() };
 
-      const res = await axios.post(`${API_BASE}/auth/login/`, payload, {
+      console.log('📤 Sending login payload:', JSON.stringify(payload));
+      
+      const res = await axios.post(`${apiBase}/auth/login/`, payload, {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 10000
+        timeout: 15000
       });
 
-      // Extract tokens and user data from JWT response
-      const accessToken = res.data.access;
-      const refreshToken = res.data.refresh;
+      console.log('✅ Login successful, response:', res.data);
       
-      if (!accessToken) {
-        throw new Error('No access token received from server');
-      }
+      const { access, refresh, ...userData } = res.data;
+      if (!access) throw new Error('No access token received');
 
-      localStorage.setItem('access_token', accessToken);
-      localStorage.setItem('refresh_token', refreshToken || '');
-      setToken(accessToken);
-      
-      // FIXED: Force organization_role to uppercase for consistent comparison
-      const userInfo = { 
-        id: res.data.user_id || res.data.id,
-        username: res.data.username || identifier,
-        email: res.data.email || identifier,
-        organization_role: (res.data.organization_role || 'User').toUpperCase(), // ✅ FORCE UPPERCASE
-        is_staff: res.data.is_staff || false,
-        is_superuser: res.data.is_superuser || false,
-        first_name: res.data.first_name || '',
-        last_name: res.data.last_name || '',
-        full_name: res.data.full_name || `${res.data.first_name || ''} ${res.data.last_name || ''}`.trim() || identifier,
+      // ✅ Normalize user data
+      const userInfo = {
+        id: userData.user_id || userData.id,
+        username: userData.username || identifier,
+        email: userData.email || identifier,
+        organization_role: (userData.organization_role || 'User').toUpperCase(),
+        is_staff: !!userData.is_staff,
+        is_superuser: !!userData.is_superuser,
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
+        full_name: userData.full_name || `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || identifier,
       };
 
-      // Debug log (pansamantala - pwede mong tanggalin pag working na)
-      console.log('Login Success → User Info:', userInfo);
-      console.log('Login Success → Role (uppercase):', userInfo.organization_role);
-
-      setUser(userInfo);
+      localStorage.setItem('access_token', access);
+      if (refresh) localStorage.setItem('refresh_token', refresh);
       localStorage.setItem('user', JSON.stringify(userInfo));
-
+      
+      setToken(access);
+      setUser(userInfo);
+      
       return { success: true };
 
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
+      console.error('❌ Full error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error details (expanded):', JSON.stringify(err.response?.data, null, 2));
       
-      let errorMsg = 'Login failed. Please try again.';
+      let errorMsg = 'Login failed. Please check your credentials.';
       
-      if (err.response?.status === 400 || err.response?.status === 401) {
-        const errors = err.response?.data;
-        if (errors) {
-          if (errors.username) errorMsg = formatApiError(errors.username);
-          else if (errors.email) errorMsg = formatApiError(errors.email);
-          else if (errors.password) errorMsg = formatApiError(errors.password);
-          else if (errors.non_field_errors) errorMsg = formatApiError(errors.non_field_errors);
-          else if (errors.detail) errorMsg = formatApiError(errors.detail);
-          else {
-            errorMsg = Object.entries(errors)
-              .map(([field, value]) => `${field}: ${formatApiError(value)}`)
-              .join('; ');
-          }
+      if (err.response?.data) {
+        const data = err.response.data;
+        // ✅ Handle both array and string error formats
+        if (Array.isArray(data.detail)) {
+          errorMsg = data.detail.join(', ');
+        } else if (typeof data.detail === 'string') {
+          errorMsg = data.detail;
+        } else if (data.username) {
+          errorMsg = formatApiError(data.username);
+        } else if (data.email) {
+          errorMsg = formatApiError(data.email);
+        } else if (data.password) {
+          errorMsg = formatApiError(data.password);
+        } else if (data.non_field_errors) {
+          errorMsg = formatApiError(data.non_field_errors);
+        } else {
+          errorMsg = Object.entries(data)
+            .map(([k, v]) => `${k}: ${formatApiError(v)}`)
+            .join('; ') || errorMsg;
         }
-      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
-        errorMsg = 'Cannot connect to server. Is Django running at http://127.0.0.1:8000?';
+      } else if (err.code === 'ERR_NETWORK' || !err.response) {
+        errorMsg = 'Cannot connect to server. Please check your internet connection.';
       }
 
       return { success: false, error: errorMsg };
@@ -130,77 +144,60 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function - FIXED with organization_role handling
+  // ✅ FIXED REGISTER
   const register = async (fullName, email, password, confirmPassword, organizationRole) => {
     setIsLoading(true);
     try {
-      // Basic validation (client-side)
-      if (password !== confirmPassword) {
-        return { success: false, error: 'Passwords do not match' };
-      }
-      if (password.length < 8) {
-        return { success: false, error: 'Password must be at least 8 characters' };
-      }
+      if (password !== confirmPassword) return { success: false, error: 'Passwords do not match' };
+      if (password.length < 8) return { success: false, error: 'Password must be at least 8 characters' };
+      if (!email.includes('@')) return { success: false, error: 'Please enter a valid email' };
 
       const payload = {
-        username: email.split('@')[0],
-        email: email,
-        password: password,
+        username: email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || `user_${Date.now()}`,
+        email: email.trim().toLowerCase(),
+        password,
         confirm_password: confirmPassword,
-        first_name: fullName.split(' ')[0] || '',
-        last_name: fullName.split(' ').slice(1).join(' ') || '',
-        organization_role: (organizationRole || 'User').toUpperCase(), // Send uppercase to backend
+        first_name: fullName.trim().split(' ')[0] || '',
+        last_name: fullName.trim().split(' ').slice(1).join(' ') || '',
+        organization_role: organizationRole || 'User',  // Use exact case from model: 'User', 'OSAS', 'Property'
       };
 
-      const res = await axios.post(`${API_BASE}/auth/register/`, payload, {
+      console.log('📤 Sending registration payload:', JSON.stringify(payload, null, 2));
+
+      const res = await axios.post(`${apiBase}/auth/register/`, payload, {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 10000
+        timeout: 15000
       });
 
-      // Return role in uppercase for consistency
-      return { 
-        success: true, 
-        message: res.data.message || 'Account created successfully! Please login with your credentials.',
-        organization_role: (res.data.organization_role || organizationRole || 'User').toUpperCase(),
-      };
+      console.log('✅ Registration successful, response:', res.data);
+
+      return { success: true, message: 'Account created! Please login.', organization_role: organizationRole || 'User' };
 
     } catch (err) {
-      console.error('=== REGISTER ERROR DEBUG ===');
-      console.error('Status:', err.response?.status);
-      console.error('Data:', err.response?.data);
-      console.error('============================');
-      
+      console.error('❌ Register error:', err);
+      console.error('❌ Full error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error details (expanded):', JSON.stringify(err.response?.data, null, 2));
       let errorMsg = 'Registration failed. Please try again.';
       
-      if (err.response?.status === 400) {
-        const errors = err.response.data;
-        
-        if (errors) {
-          if (errors.email) errorMsg = formatApiError(errors.email);
-          else if (errors.username) errorMsg = formatApiError(errors.username);
-          else if (errors.password) errorMsg = formatApiError(errors.password);
-          else if (errors.confirm_password) errorMsg = formatApiError(errors.confirm_password);
-          else if (errors.non_field_errors) errorMsg = formatApiError(errors.non_field_errors);
-          else if (errors.first_name) errorMsg = formatApiError(errors.first_name);
-          else if (errors.last_name) errorMsg = formatApiError(errors.last_name);
-          else if (errors.organization_role) errorMsg = formatApiError(errors.organization_role);
-          else {
-            errorMsg = Object.entries(errors)
-              .map(([field, value]) => `${field}: ${formatApiError(value)}`)
-              .join('; ');
-          }
-        }
-      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
-        errorMsg = 'Cannot connect to server. Is Django running at http://127.0.0.1:8000?';
+      if (err.response?.data) {
+        const data = err.response.data;
+        if (Array.isArray(data.detail)) {
+          errorMsg = data.detail.join(', ');
+        } else if (data.email) errorMsg = formatApiError(data.email);
+        else if (data.username) errorMsg = formatApiError(data.username);
+        else if (data.password) errorMsg = formatApiError(data.password);
+        else if (data.non_field_errors) errorMsg = formatApiError(data.non_field_errors);
+        else errorMsg = Object.entries(data).map(([k,v]) => `${k}: ${formatApiError(v)}`).join('; ') || errorMsg;
+      } else if (err.code === 'ERR_NETWORK' || !err.response) {
+        errorMsg = 'Cannot connect to server.';
       }
-
       return { success: false, error: errorMsg };
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Logout function
   const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -209,23 +206,37 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
   };
 
+  const refreshToken = async () => {
+    const refresh = localStorage.getItem('refresh_token');
+    if (!refresh) return false;
+    try {
+      const res = await axios.post(`${apiBase}/auth/token/refresh/`, { refresh }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+      });
+      if (res.data.access) {
+        localStorage.setItem('access_token', res.data.access);
+        setToken(res.data.access);
+        return true;
+      }
+    } catch (e) {
+      console.error('Token refresh failed:', e);
+      logout();
+    }
+    return false;
+  };
+
   const value = {
-    user,
-    token,
-    isLoading,
-    login,
-    register,
-    logout,
-    isAuthenticated: !!token
+    user, token, isLoading, login, register, logout, refreshToken,
+    isAuthenticated: !!token,
+    apiBase
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 };

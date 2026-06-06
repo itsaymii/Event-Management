@@ -1,321 +1,491 @@
-# PELEC_PROJECT (Event Management System)
+# PELEC Event Management System
 
-This repository contains a React frontend (Vite + React Router + Tailwind CSS) and a Django backend (Django + Django REST Framework + SimpleJWT) for an event management system with an OSAS admin dashboard.
-
----
-
-## 1) Repository structure
-
-- **Frontend:** `frontend/`
-- **Backend:** `backend/`
-  - **Django project:** `backend/backend/`
-  - **Apps:**
-    - `backend/api/` (custom user + auth endpoints)
-    - `backend/dashboard/` (event applications + equipment + borrow tracking)
-- **Documentation (existing):**
-  - `API_REFERENCE.md` (API quick reference examples)
-  - `EQUIPMENT_MANAGEMENT_GUIDE.md` (admin equipment workflow & endpoints)
-  - `IMPLEMENTATION_CHECKLIST.md` (feature implementation checklist)
+A web-based Event Management System designed to simplify the process of submitting, reviewing, approving, and managing campus events. The system also provides equipment inventory and borrowing management for the OSAS Office through an organized and user-friendly dashboard.
 
 ---
 
-## 2) Local development
+# Table of Contents
 
-### Prerequisites
-- Node.js (for frontend)
-- Python 3.x (for backend)
-- Git
+- Overview
+- System Features
+- User Roles
+- How to Use the System
+- User Workflow
+- Administrator Workflow
+- Equipment Management
+- Application Status
+- Local Setup
+- Running the System
+- Technologies Used
 
 ---
 
-## 3) Frontend (React)
+# Overview
 
-### Install
+The PELEC Event Management System allows students and organizations to submit event applications online while enabling the OSAS Office to efficiently review, approve, schedule, and manage events and equipment.
+
+The system eliminates manual paperwork by providing a centralized platform for event management.
+
+---
+
+# System Features
+
+## User Module
+
+- User Registration
+- User Login
+- Dashboard
+- Submit Event Application
+- View Submitted Applications
+- View Event Schedule
+- Profile Management
+
+---
+
+## OSAS Administrator Module
+
+- Admin Dashboard
+- Review Event Applications
+- Approve Applications
+- Reject Applications
+- Equipment Management
+- Borrowed Equipment Tracking
+- Event Scheduling
+
+---
+
+# User Roles
+
+## Regular User
+
+A regular user can:
+
+- Register an account
+- Login to the system
+- Submit event applications
+- View submitted applications
+- Check application status
+- View approved schedules
+
+Regular users cannot:
+
+- Access the admin dashboard
+- Approve or reject applications
+- Manage equipment
+
+---
+
+## OSAS Administrator
+
+An administrator can:
+
+- Review applications
+- Approve applications
+- Reject applications
+- Manage equipment inventory
+- Track borrowed equipment
+- View dashboard statistics
+- Manage event schedules
+
+---
+
+# How to Use the System
+
+## Step 1: Open the System
+
+Open the application using your web browser.
+
+Example:
+
+Frontend:
+
+```
+http://localhost:5173
+```
+
+Backend:
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+## Step 2: Register
+
+If you do not have an account:
+
+1. Click **Sign Up**
+2. Enter:
+
+- Full Name
+- Email Address
+- Password
+
+3. Submit the registration form.
+
+---
+
+## Step 3: Login
+
+Enter:
+
+- Email
+- Password
+
+Click **Login**.
+
+After successful login, the system redirects you to your dashboard based on your account role.
+
+---
+
+# User Workflow
+
+## Dashboard
+
+After logging in, users can view:
+
+- Dashboard summary
+- Application history
+- Event schedule
+- Notifications
+
+---
+
+## Submit Event Application
+
+Navigate to:
+
+```
+Submit Application
+```
+
+Fill in:
+
+- Event Name
+- Event Type
+- Event Date
+- Venue
+- Purpose
+- Description
+
+If equipment is needed, select the requested equipment.
+
+Click:
+
+```
+Submit
+```
+
+The application will automatically be marked as:
+
+```
+Pending
+```
+
+until reviewed by the administrator.
+
+---
+
+## View Applications
+
+Navigate to:
+
+```
+Applications
+```
+
+Users can monitor all submitted applications.
+
+Possible statuses:
+
+- Pending
+- Approved
+- Rejected
+
+---
+
+## View Schedule
+
+Navigate to:
+
+```
+Schedule
+```
+
+All approved events will be displayed here.
+
+---
+
+# Administrator Workflow
+
+## Login
+
+Login using an administrator account.
+
+---
+
+## Dashboard
+
+The dashboard displays:
+
+- Total Applications
+- Pending Applications
+- Approved Applications
+- Rejected Applications
+- Equipment Statistics
+- Borrowed Equipment Records
+
+---
+
+## Review Applications
+
+Navigate to:
+
+```
+Review Queue
+```
+
+Select an application.
+
+Review all submitted information.
+
+Choose one of the following:
+
+```
+Approve
+```
+
+or
+
+```
+Reject
+```
+
+The status will automatically update.
+
+---
+
+## Equipment Management
+
+Navigate to:
+
+```
+Equipment Management
+```
+
+Administrator can:
+
+- Add equipment
+- Edit equipment
+- Delete equipment
+- Update equipment availability
+- Mark equipment under maintenance
+
+---
+
+## Borrowed Equipment Tracking
+
+Navigate to:
+
+```
+Borrowed Equipment
+```
+
+Administrator can:
+
+- View borrowed equipment
+- Record returned equipment
+- Check overdue equipment
+- Update equipment condition
+
+---
+
+# Equipment Borrowing Process
+
+```
+User requests equipment
+            │
+            ▼
+Application submitted
+            │
+            ▼
+Administrator reviews
+            │
+            ▼
+Application approved
+            │
+            ▼
+Equipment borrowed
+            │
+            ▼
+Equipment returned
+            │
+            ▼
+Administrator records return
+```
+
+---
+
+# Event Application Process
+
+```
+User Registration
+        │
+        ▼
+Login
+        │
+        ▼
+Submit Event Application
+        │
+        ▼
+Pending Status
+        │
+        ▼
+Administrator Review
+     ┌───────────────┐
+     │               │
+     ▼               ▼
+Approved         Rejected
+     │
+     ▼
+Added to Schedule
+```
+
+---
+
+# Application Status
+
+| Status | Description |
+|---------|-------------|
+| Pending | Waiting for administrator review |
+| Approved | Application has been approved |
+| Rejected | Application has been rejected |
+
+---
+
+# Best Practices
+
+- Fill out all required information correctly.
+- Submit applications before the intended event date.
+- Regularly monitor application status.
+- Return borrowed equipment on or before the due date.
+- Contact the administrator for corrections if necessary.
+
+---
+
+# Local Development Setup
+
+## Frontend
+
+Install dependencies:
+
 ```bash
 cd frontend
 npm install
 ```
 
-### Run (dev)
+Run:
+
 ```bash
 npm run dev
 ```
 
-Frontend will be served by Vite at:
-- `http://localhost:5173`
-
 ---
 
-## 4) Backend (Django + DRF)
+## Backend
 
-### Create a virtual environment
+Create virtual environment:
+
 ```bash
 cd backend
 python -m venv .venv
 ```
 
-Activate:
-- **Windows:** `.\.venv\Scripts\activate`
-- **macOS/Linux:** `source .venv/bin/activate`
+Activate environment:
 
-### Install dependencies
+### Windows
+
+```bash
+.\.venv\Scripts\activate
+```
+
+### macOS/Linux
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### Run migrations
+Run migrations:
+
 ```bash
 python manage.py migrate
 ```
 
-### Start server
+Start the backend server:
+
 ```bash
 python manage.py runserver
 ```
 
-Backend will be served at:
-- `http://127.0.0.1:8000`
-
-During development (when `DEBUG=True`), uploaded media is served under:
-- `http://127.0.0.1:8000/media/`
-
 ---
 
-## 5) Environment / configuration notes
+# Default URLs
 
-Backend CORS is configured in:
-- `backend/backend/settings.py`
+Frontend
 
-CORS allows:
-- `http://localhost:5173`
-- `http://127.0.0.1:5173`
-- `http://localhost:3000`
-- `http://127.0.0.1:3000`
-
-The backend uses SQLite by default:
-- `backend/backend/settings.py` → `db.sqlite3`
-
-> **Security note:** `SECRET_KEY` in settings is a placeholder (`change-this-secret-key`). Replace it for production deployments.
-
----
-
-## 6) Authentication & Authorization (JWT)
-
-### Authentication model
-- Custom user model: `backend/api/models.py` → `CustomUser`
-- Login uses **email** as the `USERNAME_FIELD`.
-
-### Tokens
-- SimpleJWT is enabled in `backend/backend/settings.py`
-- JWT header format:
-  - `Authorization: Bearer <access_token>`
-
-### Auth endpoints (mounted under `/api/auth/`)
-These are registered in `backend/api/urls.py` and connected in `backend/dashboard/urls.py`:
-
-- `POST /api/auth/login/`
-- `POST /api/auth/refresh/`
-- `POST /api/auth/register/`
-- `POST /api/auth/logout/`
-- `GET /api/auth/user/`
-- `PUT/PATCH /api/auth/user/profile/`
-- `POST /api/auth/user/password/`
-
-### Frontend token storage
-Frontend stores the JWT token and user in `localStorage` via `AuthContext` (see `frontend/src/context/AuthContext.jsx`).
-
----
-
-## 7) Roles & permissions
-
-`CustomUser.organization_role` values:
-- **User**
-- **OSAS** (Admin)
-- **Property**
-
-Backend role checks live primarily in:
-- `backend/dashboard/views.py`
-  - `IsOSASRole`
-  - `IsOSASOrPropertyRole`
-  - `IsOwnerOrAdmin`
-
-Frontend role-based routing lives in:
-- `frontend/src/App.jsx` (`ProtectedRoute`)
-
-### What each role can do
-- **OSAS**
-  - Admin dashboard routes: `/admin/*`
-  - Can manage:
-    - event application review/approval/rejection
-    - all users (admin user endpoint)
-    - equipment inventory
-    - equipment borrow/return tracking
-- **User**
-  - Regular routes: `/dashboard`, `/applications`, `/schedule`, `/submit-application`
-  - Can manage **their own** event applications
-- **Property**
-  - Frontend routing supports the role, but backend enforcement depends on endpoint permissions
-
----
-
-## 8) Core domain concepts
-
-### EventApplication
-Model: `backend/dashboard/models.py` → `EventApplication`
-
-Key fields:
-- `event_name`, `event_type`
-- `event_date` (and aliases `start_date`, `end_date`)
-- `venue`
-- `purpose`, `description`
-- `status`: `pending | approved | rejected`
-- `equipment`: stored as a JSON string in SQLite-safe text field
-
-### Equipment
-Model: `backend/dashboard/models.py` → `Equipment`
-
-Key fields:
-- `equipment_id` (unique code like `AUD-001`)
-- `equipment_name`, `description`, `category`
-- `status`: `available | borrowed | maintenance | damaged`
-- `condition`: `excellent | good | fair | poor`
-- `quantity_total`, `quantity_available`
-
-### EquipmentBorrow
-Model: `backend/dashboard/models.py` → `EquipmentBorrow`
-
-Key fields:
-- `equipment` (FK)
-- `event_application` (FK, optional)
-- `user` (FK)
-- `quantity_borrowed`
-- `borrow_date`, `expected_return_date`, `actual_return_date`
-- `status`: `active | returned | damaged_return`
-- `condition_on_return`, `notes`, `damage_notes`
-- `is_overdue` (property)
-
----
-
-## 9) Frontend pages / routes
-
-### Public landing
-- `/` → `frontend/src/pages/LandingPage.jsx`
-
-### Authentication pages
-- `/login` → `frontend/src/pages/LoginPage.jsx`
-- `/signup` → `frontend/src/pages/SignUpPage.jsx`
-
-### User dashboard
-- `/dashboard` → `frontend/src/pages/DashboardOverview.jsx`
-- `/applications` → `frontend/src/pages/Application.jsx`
-- `/schedule` → `frontend/src/pages/SchedulePage.jsx`
-- `/submit-application` → `frontend/src/pages/SubmitApplication.jsx`
-
-### OSAS admin dashboard
-- `/admin` → `frontend/src/pages/admin/AdminDashboard.jsx`
-  - nested routes handled inside that component:
-    - `/admin/review` → `ReviewQueue.jsx`
-    - `/admin/schedule` → `AdminSchedule.jsx`
-    - `/admin/equipment` → `AdminEquipmentManagement.jsx`
-    - `/admin/borrowed` → `BorrowedEquipmentTracking.jsx`
-
----
-
-## 10) API endpoints
-
-Base path is:
-- **`/api/`**
-
-### Quick reference
-Use:
-- `API_REFERENCE.md` (examples + cURL)
-- `EQUIPMENT_MANAGEMENT_GUIDE.md` (equipment workflow + endpoints)
-
-### Equipment APIs (admin)
-From `backend/dashboard/views.py`:
-- List equipment: `GET /api/admin/equipment/`
-- Create equipment: `POST /api/admin/equipment/`
-- Equipment detail + update/delete:
-  - `GET /api/admin/equipment/{id}/`
-  - `PUT /api/admin/equipment/{id}/`
-  - `DELETE /api/admin/equipment/{id}/`
-- Stats: `GET /api/admin/equipment/stats/`
-- Status actions:
-  - `POST /api/admin/equipment/{id}/mark_available/`
-  - `POST /api/admin/equipment/{id}/mark_maintenance/`
-
-### Equipment borrow/return APIs (admin)
-From `backend/dashboard/views.py`:
-- List borrow records: `GET /api/admin/equipment-borrow/`
-- Create borrow record: `POST /api/admin/equipment-borrow/`
-- Record return action:
-  - `POST /api/admin/equipment-borrow/{id}/record_return/`
-- Specialized endpoints:
-  - `GET /api/admin/equipment-borrow/currently_borrowed/`
-  - `GET /api/admin/equipment-borrow/overdue/`
-
-### Applications APIs
-User and admin application APIs are routed by routers in:
-- `backend/dashboard/urls.py`
-
----
-
-## 11) Database & migrations
-
-Migrations are stored under:
-- `backend/api/migrations/`
-- `backend/dashboard/migrations/`
-
-The equipment/borrow feature includes:
-- `backend/dashboard/migrations/0006_equipment_equipmentborrow.py`
-
-To apply all migrations locally:
-```bash
-cd backend
-python manage.py migrate
+```
+http://localhost:5173
 ```
 
-To insert sample equipment data (admin tooling):
-```bash
-python manage.py populate_equipment
+Backend
+
+```
+http://127.0.0.1:8000
 ```
 
-(See the command under `backend/dashboard/management/commands/populate_equipment.py`.)
+API
+
+```
+http://127.0.0.1:8000/api/
+```
 
 ---
 
-## 12) Troubleshooting
+# Technologies Used
 
-### CORS / frontend cannot call backend
-- Ensure backend is running on port `8000`
-- Ensure Vite is running on `5173`
-- Verify CORS config in `backend/backend/settings.py`
+## Frontend
 
-### JWT errors
-- Confirm the `Authorization` header exists:
-  - `Bearer <access_token>`
-- Confirm token is being stored by the frontend login flow.
+- React
+- Vite
+- React Router
+- Tailwind CSS
 
-### Equipment endpoints return 403
-- OSAS role is required for equipment endpoints via `IsOSASRole`.
-- Confirm `organization_role` is `OSAS` for that account.
+## Backend
 
----
+- Django
+- Django REST Framework
+- SimpleJWT
 
-## 13) Production notes (high-level)
+## Database
 
-- Replace `SECRET_KEY` with a real secret value
-- Configure allowed hosts and CORS for your production domains
-- Use a production DB (PostgreSQL/MySQL) instead of SQLite
-- Serve static/media via a proper web server/CDN
-- Consider securing file uploads & adding email notifications if required
+- SQLite (Development)
 
----
+## Programming Languages
 
-## 14) Key documentation files
-
-- **API examples:** `API_REFERENCE.md`
-- **Equipment workflow:** `EQUIPMENT_MANAGEMENT_GUIDE.md`
-- **Implementation checklist:** `IMPLEMENTATION_CHECKLIST.md`
+- JavaScript
+- Python
+- HTML
+- CSS
 
 ---
+
+# Summary
+
+The PELEC Event Management System provides a centralized platform for managing campus events and equipment. It simplifies the submission and approval process, improves organization, and enhances the efficiency of event and equipment management for both users and OSAS administrators.

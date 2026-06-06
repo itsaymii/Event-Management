@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: pelec-backend
+    runtime: python
+
+    buildCommand: "cd . && pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "cd . && gunicorn backend.wsgi:application"
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: SECRET_KEY
+        value: "django-insecure-generate-a-secure-key-on-render-dashboard"
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pelec-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: "pelec-backend.onrender.com,www.pelec-backend.onrender.com"
+      - key: FRONTEND_URLS
+        value: "https://event-management-six-chi.vercel.app/"
+
+databases:
+  - name: pelec-db
+    plan: standard
+    region: singapore
